@@ -2,6 +2,9 @@ name: Destroy Medusa Backend Infrastructure
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main  # This means it'll also run when you push to main
 
 jobs:
   destroy:
@@ -9,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: terraform
+        working-directory: terraform  # Run commands from the terraform/ directory
 
     steps:
       - name: Checkout Repository
@@ -32,4 +35,3 @@ jobs:
 
       - name: Destroy Infrastructure
         run: terraform destroy -auto-approve
-        #
