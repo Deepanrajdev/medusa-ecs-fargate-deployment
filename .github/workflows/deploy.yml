@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: terraform # Ensures Terraform commands run inside "terraform/" directory
+        working-directory: terraform  # Ensure Terraform runs inside the terraform/ directory
 
     steps:
       - name: Checkout Repository
@@ -29,15 +29,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+      - name: Authenticate Docker to AWS ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin 851725609674.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Build and Push Docker Image
         run: |
           cd ..
-          docker build -t talibk/medusa-backend .
-          docker tag talibk/medusa-backend:latest talibk/medusa-backend:latest
-          docker push talibk/medusa-backend:latest
+          docker build -t deepan/medusabackend .
+          docker tag deepan/medusabackend:latest 851725609674.dkr.ecr.us-east-1.amazonaws.com/deepan/medusabackend:latest
+          docker push 851725609674.dkr.ecr.us-east-1.amazonaws.com/deepan/medusabackend:latest
 
       - name: Initialize Terraform
         run: terraform init
@@ -51,10 +53,3 @@ jobs:
       - name: Force New Deployment in ECS
         run: |
           aws ecs update-service --cluster medusa-cluster --service medusa-service --force-new-deployment
-
-      # Uncomment below if you want to destroy
-      # - name: Plan Terraform Destroy
-      #   run: terraform plan -destroy
-
-      # - name: Apply Terraform Destroy
-      #   run: terraform destroy -auto-approve
