@@ -1,17 +1,15 @@
-name: Deploy Medusa Backend to AWS ECS
+name: Destroy Medusa Backend Infrastructure
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to AWS
+  destroy:
+    name: Terraform Destroy
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: terraform  # Ensure Terraform runs inside the terraform/ directory
+        working-directory: terraform
 
     steps:
       - name: Checkout Repository
@@ -29,33 +27,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Authenticate Docker to AWS ECR
-        run: |
-          aws ecr get-login-password --region us-east-1 | \
-          docker login --username AWS --password-stdin 851725609674.dkr.ecr.us-east-1.amazonaws.com
-
-      - name: Build and Push Docker Image
-        run: |
-          cd ..
-          docker build -t deepan/medusabackend .
-          docker tag deepan/medusabackend:latest 851725609674.dkr.ecr.us-east-1.amazonaws.com/deepan/medusabackend:latest
-          docker push 851725609674.dkr.ecr.us-east-1.amazonaws.com/deepan/medusabackend:latest
-
       - name: Initialize Terraform
         run: terraform init
 
-      - name: Plan Terraform Changes
-        run: terraform plan
-
-      - name: Apply Terraform Changes
-        run: terraform apply -auto-approve
-
-      - name: Force New Deployment in ECS
-        run: |
-          aws ecs update-service --cluster medusa-cluster --service medusa-service --force-new-deployment
-
-      - name: Plan Terraform Destroy
-        run: terraform plan -destroy
-
-      - name: Apply Terraform Destroy
+      - name: Destroy Infrastructure
         run: terraform destroy -auto-approve
